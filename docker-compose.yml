@@ -1,0 +1,64 @@
+services:
+
+  # Front-end
+  front-end:
+    image: ullsoftware/workflow-maker_front-end:latest
+    container_name: front-end
+    ports:
+      - 80:80
+    environment:
+      - VITE_API_URL=http://back-end:9000/
+    depends_on:
+      - back-end
+    profiles: ["full"]
+
+  # Back-end
+  back-end:
+    build:
+        context: ./back-end
+        args:
+          GITHUB_TOKEN: ${GH_TOKEN} 
+          SHARED_CONTAINER_PATH: /app/files
+          HOST_FILES_PATH: /home/david/workflow-maker/files
+    image: ullsoftware/workflow-maker_back-end:latest
+    container_name: back-end
+    ports:
+      - 9000:8080    
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/db-application
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./files:/app/files
+    depends_on:
+      - mongodb
+    profiles: ["back-end", "full"]
+  
+  # MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    command: mongod --port 27017
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb_volume:/data/db
+    profiles: ["database", "back-end", "full"]
+
+  # Watchtower (auto-updates)
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always    
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_DEBUG: "true"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30
+
+volumes:
+  mongodb_volume: {}
+
+networks:
+  default:
+    name: fullstack-network

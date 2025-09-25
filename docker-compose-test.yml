@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+
+  # Front-end
+  front-end:
+    build:
+      context: ./front-end
+      args:
+        GITHUB_TOKEN: ${GH_TOKEN}
+        VITE_API_URL: http://localhost:9000/ 
+    image: ullsoftware/workflow-maker_front-end:latest       
+    container_name: front-end
+    ports:
+      - "80:80"
+    depends_on:
+      - back-end
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # Back-end
+  back-end:
+    build:
+      context: ./back-end
+      args:
+        GITHUB_TOKEN: ${GH_TOKEN} 
+        SHARED_CONTAINER_PATH: /app/files
+        HOST_FILES_PATH: /home/david/workflow-maker/files
+    image: ullsoftware/workflow-maker_back_end:latest    
+    container_name: back-end
+    ports:
+      - 9000:8080   
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/db-application
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./files:/app/files
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+
+  # MongoDB
+  mongodb:
+    image: mongo:latest
+    container_name: mongo
+    command: mongod --port 27017
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  # Watchtower (local-only mode)
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 5 --label-enable
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_DEBUG=true
+      - WATCHTOWER_NO_PULL=true 
+
+volumes:
+  mongodb_data:
+
+networks:
+  default:
+    name: fullstack-network
