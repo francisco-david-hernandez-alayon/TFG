@@ -44,7 +44,7 @@ chmod +x $DOCKER_CONFIG/cli-plugins/docker-compose
 ```
 3. Comprobar versión de docker compose
 ```
-docker-compose -v
+docker compose version
 ```
 
 <br>
@@ -248,7 +248,7 @@ docker rm -f $(docker ps -aq)
 ## Ejecución
 ### Ejecutar docker-compose despliege
 ```
-docker-compose --profile full up 
+docker compose --profile full up 
 ```
 
 ### Realizar cambios en frontend mientras está activo el docker-compose para dev
